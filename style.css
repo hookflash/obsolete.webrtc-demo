@@ -1,0 +1,47 @@
+
+HTML, BODY {
+	padding: 0px;
+	margin: 0px;
+	font-size: 12px;
+	font-family: Tahoma;
+}
+
+.hidden {
+	display: none;
+}
+
+BUTTON {
+	font-size: 16px;
+}
+
+DIV.view {
+	margin: 50px;
+}
+
+UL {
+	margin-top: 18px;
+	list-style: none;
+	padding: 2px;
+}
+
+#contacts > UL > LI {
+	font-size: 18px;
+	height: 50px;
+	line-height: 50px;
+	vertical-align: middle;
+	margin-bottom: 5px;
+}
+#contacts > UL > LI:hover {
+	background-color: #ececec;
+}
+
+#contacts > UL > LI > IMG {
+	width: 50px;
+	height: 50px;
+	margin-right: 20px;	
+	float: left;
+}
+
+#contacts > UL > LI > BUTTON {
+	margin-left: 20px;
+}

@@ -1,0 +1,153 @@
+<html><head>
+<link rel="stylesheet" href="style.css">
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.5/require.min.js"></script>
+<script>
+	require.config({
+	    paths: {
+	        'webrtc-shim':      'https://raw.github.com/openpeer/webrtc-shim/v0.1.1/webrtc-shim',
+	        'rolodex':          'http://webrtc.hookflash.me/.openpeer-rolodex/client',
+	        'rolodex-presence': 'http://webrtc.hookflash.me/.openpeer-rolodex-presence/client'
+	    }
+	});
+</script>
+</head><body>
+
+
+	<div id="loading" class="view">
+		<h1>Loading ...</h1>
+	</div>
+
+
+	<div id="login" class="view hidden">
+		<h1>Login</h1>
+		<button onClick="window.rolodex.loginService('facebook')">Facebook</button>
+		<button onClick="window.rolodex.loginService('linkedin')">LinkedIn</button>
+		<button onClick="window.rolodex.loginService('twitter')">Twitter</button>
+		<button onClick="window.rolodex.loginService('github')">Github</button>
+	</div>
+
+
+	<div id="contacts" class="view hidden">
+		<h1>Contacts</h1>
+		<button onClick="window.logout()">Logout</button>
+		<ul></ul>
+	</div>
+
+	<div id="call" class="view hidden">
+		<h1>Calling <span></span></h1>
+		<button onClick="window.hangup()">Hangup</button>
+		<ul></ul>
+	</div>
+
+<script>
+	// Load dependencies
+    require([
+	    'webrtc-shim',
+    	'rolodex/client',
+	    'rolodex-presence/client'
+    ], function(WEBRTC_SHIM, ROLODEX, ROLODEX_PRESENCE) {
+
+    	// Initialize the rolodex with presence and messaging features
+	    window.rolodex = new ROLODEX({
+	        baseURL: 'http://webrtc.hookflash.me'
+	    });
+		var rolodexPresence = new ROLODEX_PRESENCE({
+	        baseURL: 'http://webrtc.hookflash.me',
+			rolodex: window.rolodex
+		});
+
+	    // If a service is logged in render the contacts view
+	    window.rolodex.on('services.fetched', function(services) {
+	    	for (var serviceId in services) {
+	    		if (services[serviceId].loggedin) {
+	    			render('contacts', serviceId);
+	    			return;
+	    		}
+	    	}
+			render('login');
+	    });
+
+	    // Update the list of contacts in the contacts view
+	    function renderContactsList() {
+	    	var onlineContacts = rolodexPresence.getOnlineContacts();
+	    	window.rolodex.getContacts('*', {
+	    		peerContact: /^peer:/
+	    	}).then(function(contacts) {
+	    		var ul = $('#contacts > UL');
+	    		ul.html('');
+	    		for (var serviceId in contacts) {
+	    			for (var contactId in contacts[serviceId]) {
+	    				var contact = contacts[serviceId][contactId];
+	    				var li = [];
+	    				li.push('<li contact="' + contact.peerContact + '">');
+		    				li.push('<img src="' + contact.photo + '"/>');
+		    				li.push(contact.fn || contact.nickname);
+		    				if (onlineContacts[contact.peerContact]) {
+			    				li.push('<button>Call</button>');
+		    				}
+	    				li.push('</li>');
+						$(li.join('')).appendTo(ul);
+	    			}
+	    		}
+	    	});
+	    }
+	    window.rolodex.on('contacts.fetched', renderContactsList);
+	    rolodexPresence.on('contact.online', renderContactsList);
+	    rolodexPresence.on('contact.away', renderContactsList);
+	    rolodexPresence.on('contact.back', renderContactsList);
+	    rolodexPresence.on('contact.offline', renderContactsList);
+
+	    // View rendering
+	    var rendered = 'loading';
+	    function render(view, contextId) {
+	    	// Ignore repeat calls
+	    	if (rendered === view) return;
+
+	    	// Show DIV for requested view
+	    	$('#' + rendered).addClass('hidden');
+	    	$('#' + view).removeClass('hidden');
+	    	rendered = view;
+
+	    	// Deal with specific views
+	    	if (rendered === 'contacts') {
+	    		if (contextId) $('#contacts').attr('service', contextId);
+				window.logout = function() {
+					window.rolodex.logoutService($('#contacts').attr('service'));
+				}
+			} else
+	    	if (rendered === 'call') {
+	    		rolodex.getContact(contextId).then(function(contact) {
+		    		$('#call > H1 > SPAN').html(contact.fn || contact.nickname);
+					window.hangup = function() {
+						rolodexPresence.sendMessage(contact.peerContact, {
+							action: "hangup"
+						});
+						render('contacts');
+					}
+					rolodexPresence.sendMessage(contact.peerContact, {
+						action: "call"
+					});
+	    		});
+	    	}
+	    }
+
+	    // Handle click to call a contact
+		$('#contacts > UL').click(function(evt) {
+			var peerContact = $(evt.target).parent().attr('contact');
+			if (!peerContact) return;
+			render('call', peerContact);
+		});
+
+		// Handle call requests
+		rolodexPresence.on("contact.message", function(peerContact, message) {
+			if (message.action === "call") {
+				render('call', peerContact);
+			} else
+			if (message.action === "hangup") {
+				render('contacts');
+			}
+		});
+    });
+</script>
+</body></html>
