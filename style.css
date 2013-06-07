@@ -128,7 +128,8 @@ BUTTON.ui-dialog-titlebar-close {
 
 DIV.call-accept-dialog > DIV.ui-dialog-content,
 DIV.call-declined-dialog > DIV.ui-dialog-content,
-DIV.call-cancel-dialog > DIV.ui-dialog-content {
+DIV.call-cancel-dialog > DIV.ui-dialog-content,
+DIV.call-hungup-dialog > DIV.ui-dialog-content {
     font-size: 18px;
     overflow: hidden;
 }

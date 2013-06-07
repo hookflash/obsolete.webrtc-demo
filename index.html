@@ -71,6 +71,9 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
         <div id="call-cancel-dialog" title="Calling" class="hidden">
           <p>Trying to initiate call to <span></span></p>
         </div>
+        <div id="call-hungup-dialog" title="Hangup" class="hidden">
+          <p><span></span> hung up the call</p>
+        </div>
     </div>
 
 
@@ -169,6 +172,22 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
             // Handle signal for an existing session.
             if (peerSession) {
                 peerSession.onSignal(message.type, message.data);
+                if (message.type === 'hangup') {
+                    // Let user know that peer hung up the call.
+                    $('#call-hungup-dialog').dialog({
+                        dialogClass: 'call-hungup-dialog',
+                        closeOnEscape: false,
+                        resizable: false,
+                        width: 600,
+                        height: 165,
+                        modal: true,
+                        buttons: {
+                            "Ok": function() {
+                                $(this).dialog('close');
+                            }
+                        }
+                    });
+                }
             }
             if (message.type === 'decline') {
                 // Let user know that call was declined.
@@ -191,6 +210,15 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
     // ############################################################
     // # Render Views.
     // ############################################################
+
+        function closeDialogs(names) {
+            names.forEach(function(name) {
+                // Will throw if dialog has not yet been initialized.
+                try {
+                    $('#call-' + name + '-dialog').dialog('close');
+                } catch(err) {}            
+            });
+        }
 
         // The default view.
         var rendered = 'loading';
@@ -226,10 +254,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                 }
             } else
             if (view === 'call') {
-                // Reset state.
-                try {
-                    $('#call-declined-dialog').dialog('close');
-                } catch(err) {}
+                closeDialogs([ 'declined', 'hungup' ]);
                 var peerContact = contextId;
                 // Obtain details for peer contact by ID.
                 rolodex.getContact(peerContact).then(function(contact) {
@@ -238,6 +263,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     $('#call-accept-dialog > P > SPAN').html(contact.fn || contact.nickname);
                     $('#call-declined-dialog > P > SPAN').html(contact.fn || contact.nickname);
                     $('#call-cancel-dialog > P > SPAN').html(contact.fn || contact.nickname);
+                    $('#call-hungup-dialog > P > SPAN').html(contact.fn || contact.nickname);
                     // Declare function called from view HTML.
                     window.hangup = function() {
                         peerSession.end();
@@ -322,11 +348,11 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                         },
                         "Decline": function() {
                             $(this).dialog('close');
-                            peerSession.end();
                             // Send decline signal to peer.
                             rolodexPresence.sendMessage(peerContact, {
                                 type: 'decline'
                             });
+                            peerSession.end();
                         }
                     }
                 });
@@ -466,14 +492,11 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                 onSignal: function(type, data) {
                     // Our offer was declined.
                     if (type === 'decline') {
-                        peerSession.end();
+                        if (peerSession) peerSession.end();
                     } else
                     // Our offer was accepted.
                     if (type === 'accept') {
-                        // Reset state.
-                        try {
-                            $('#call-cancel-dialog').dialog('close');
-                        } catch(err) {}
+                        closeDialogs([ 'cancel', 'hungup' ]);
                         init();
                     } else
                     // Peer sent ICE candidate.
@@ -489,7 +512,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     } else
                     // Peer requested to end the session.
                     if (type === 'hangup') {
-                        peerSession.end();
+                        if (peerSession) peerSession.end();
                     }
                 },
                 // Send a text message to the peer.
@@ -498,17 +521,12 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                 },
                 // User requested session to end.
                 end: function() {
+                    peerSession = null;
                     // Hide call control UI.
                     $('#call > DIV:nth-child(2)').hide();
                     $('#remoteVideo').attr('src', '');
                     $('#localVideo').attr('src', '');
-                    // Reset state.
-                    try {
-                        $('#call-accept-dialog').dialog('close');
-                    } catch(err) {}
-                    try {
-                        $('#call-cancel-dialog').dialog('close');
-                    } catch(err) {}
+                    closeDialogs([ 'accept', 'cancel', 'hungup' ]);
                     switchView('contacts');
                     // Release access to local webcam and microphone.
                     if (localStream) localStream.stop();
@@ -518,7 +536,6 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     rolodexPresence.sendMessage(peerContact, {
                         type: 'hangup'
                     });
-                    peerSession = null;
                 }
             };
         }
