@@ -122,11 +122,13 @@ UL {
 	font-size: 16px;
 }
 
-DIV.call-accept-dialog > DIV.ui-dialog-titlebar > BUTTON.ui-dialog-titlebar-close {
+BUTTON.ui-dialog-titlebar-close {
 	display: none;
 }
 
-DIV.call-accept-dialog > DIV.ui-dialog-content {
+DIV.call-accept-dialog > DIV.ui-dialog-content,
+DIV.call-declined-dialog > DIV.ui-dialog-content,
+DIV.call-cancel-dialog > DIV.ui-dialog-content {
 	font-size: 18px;
 	overflow: hidden;
 }

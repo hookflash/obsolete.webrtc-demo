@@ -65,6 +65,12 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 		<div id="call-accept-dialog" title="Accept Call ?" class="hidden">
 		  <p>Do you want to accept a call from <span></span></p>
 		</div>
+		<div id="call-declined-dialog" title="Call was declined" class="hidden">
+		  <p><span></span> declined your call.</p>
+		</div>
+		<div id="call-cancel-dialog" title="Calling" class="hidden">
+		  <p>Trying to initiate call to <span></span></p>
+		</div>
 	</div>
 
 
@@ -164,6 +170,22 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 			if (peerSession) {
 				peerSession.onSignal(message.type, message.data);
 			}
+			if (message.type === 'decline') {
+				// Let user know that call was declined.
+				$('#call-declined-dialog').dialog({
+					dialogClass: 'call-declined-dialog',
+					closeOnEscape: false,
+					resizable: false,
+					width: 600,
+					height: 165,
+					modal: true,
+					buttons: {
+						"Ok": function() {
+							$(this).dialog('close');
+						}
+					}
+				});
+			}
 		});
 
 	// ############################################################
@@ -204,12 +226,18 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 				}
 			} else
 	    	if (view === 'call') {
+		    	// Reset state.
+		    	try {
+			    	$('#call-declined-dialog').dialog('close');
+			    } catch(err) {}
 	    		var peerContact = contextId;
 	    		// Obtain details for peer contact by ID.
 	    		rolodex.getContact(peerContact).then(function(contact) {
 	    			// Set name/nickname of contact in view HTML.
 		    		$('#call > H1 > SPAN').html(contact.fn || contact.nickname);
 		    		$('#call-accept-dialog > P > SPAN').html(contact.fn || contact.nickname);
+		    		$('#call-declined-dialog > P > SPAN').html(contact.fn || contact.nickname);
+		    		$('#call-cancel-dialog > P > SPAN').html(contact.fn || contact.nickname);
 		    		// Declare function called from view HTML.
 					window.hangup = function() {
 						peerSession.end();
@@ -258,11 +286,26 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 				rolodexPresence.sendMessage(peerContact, {
 					type: 'offer'
 				});
+				$('#call-cancel-dialog').dialog({
+					dialogClass: 'call-cancel-dialog',
+					closeOnEscape: false,
+					resizable: false,
+					width: 600,
+					height: 165,
+					modal: true,
+					buttons: {
+						"Cancel": function() {
+							$(this).dialog('close');
+							peerSession.end();
+						}
+					}
+				});				
 			} else
 			if (mode === 'answer') {
 				// Give user a chance to decline call.
 				$('#call-accept-dialog').dialog({
 					dialogClass: 'call-accept-dialog',
+					closeOnEscape: false,
 					resizable: false,
 					width: 600,
 					height: 165,
@@ -283,7 +326,6 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 							rolodexPresence.sendMessage(peerContact, {
 								type: 'decline'
 							});
-							switchView('contacts');
 						}
 					}
 				});
@@ -424,10 +466,13 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 					// Our offer was declined.
 					if (type === 'decline') {
 						peerSession.end();
-						switchView('contacts');
 					} else
 					// Our offer was accepted.
 					if (type === 'accept') {
+						// Reset state.
+				    	try {
+					    	$('#call-cancel-dialog').dialog('close');
+					    } catch(err) {}
 						init();
 					} else
 					// Peer sent ICE candidate.
@@ -456,6 +501,13 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 					$('#call > DIV:nth-child(2)').hide();
 					$('#remoteVideo').attr('src', '');
 					$('#localVideo').attr('src', '');
+					// Reset state.
+			    	try {
+				    	$('#call-accept-dialog').dialog('close');
+				    } catch(err) {}
+			    	try {
+				    	$('#call-cancel-dialog').dialog('close');
+				    } catch(err) {}
 					switchView('contacts');
 					// Release access to local webcam and microphone.
 					if (localStream) localStream.stop();
