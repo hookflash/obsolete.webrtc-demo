@@ -19,6 +19,10 @@ Features:
   * Video & audio streaming via peer to peer connection
   * Text messaging via peer to peer data channel
 
+The entire demo code is contained in one static HTML file: https://github.com/openpeer/webrtc-demo/blob/master/index.html
+
+You can try the demo online at: http://webrtcdemo-hookflash.dotcloud.com/
+
 Usage
 -----
 
@@ -27,12 +31,18 @@ Requirements:
   * [Google Chrome](https://www.google.com/chrome/)
   * [Firefox](http://www.mozilla.org/firefox/) ( **PLANNED** )
 
-Install & Run:
+Install & run locally:
 
     npm install
     npm start
     open http://localhost:8080/
 
+Deploy to [dotcloud](https://www.dotcloud.com/):
+
+    sudo easy_install pip && sudo pip install dotcloud
+    dotcloud setup
+    dotcloud create webrtcdemo
+    dotcloud push
 
 License
 =======

@@ -5,7 +5,7 @@
 	"pm": "npm",
     "main": "server.js",
     "dependencies": {
-	    "send": "~0.1.0"
+	    "send": "~0.1.1"
     },
     "scripts": {
     	"start": "node ."
