@@ -50,9 +50,16 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 		<h1>Calling <span></span></h1>
 		<div class="hidden">
 			<button onClick="window.hangup()">Hangup</button>
-			<div class="video">
-				<video id="localVideo" autoplay="autoplay" muted="true"></video>
-				<video id="remoteVideo" autoplay="autoplay"></video>
+			<div>Waiting for peer to connect ...</div>
+			<div class="hidden">
+				<div class="text">
+					<div id="messages"></div>
+					<input id="send" type="text"/>
+				</div>
+				<div class="video">
+					<video id="localVideo" autoplay="autoplay" muted="true"></video>
+					<video id="remoteVideo" autoplay="autoplay"></video>
+				</div>
 			</div>
 		</div>
 		<div id="call-accept-dialog" title="Accept Call ?" class="hidden">
@@ -220,6 +227,22 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 			setupPeerSession(peerContact, 'offer');
 		});
 
+		// Handle sending of text messages.
+		$('#send').keydown(function(key) {
+			if (key.keyCode !== 13) return;  // 'Return' key
+			// Obtain the message to be sent from the input field.
+			var message = $(this).val();
+			// Send the message to the peer.
+			peerSession.sendMessage(message);
+			// Append message to our transcript and clear the input field.
+			var messagesNode = $('#messages');
+			$('<div class="sent">' + message + '</div>').appendTo(messagesNode);
+			messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
+			$(this).val("");
+			// Ignore the `Return` key that was just pressed.
+			return false;
+		});
+
 	// ############################################################
 	// # Setup peer session using WebRTC.
 	// ############################################################
@@ -266,7 +289,11 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 				});
 			}
 
+			// The webRTC peer connection.
 			var peerConnection = null;
+			// A WebRTC data channel for sending messages.
+			var peerChannel = null;
+			// Our local webcam & audio stream.
 			var localStream = null;
 
 			function fail(err) {
@@ -300,25 +327,68 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 				peerConnection.createAnswer(broadcastSessionDescription, fail);
 		    }
 
+		    // Called once we have a data channel object and media streams are connected.
+		    function attachToPeerChannel() {
+		    	// We use the open and close events to determine when the connection is established.
+				peerChannel.onopen = function() {
+					// Show video & text messaging UI.
+					$('#call > DIV:nth-child(2) > DIV:nth-child(3)').show();
+				};
+				peerChannel.onclose = function() {
+					// Hide video & text messaging UI.
+					$('#call > DIV:nth-child(2) > DIV:nth-child(3)').hide();
+				};
+				peerChannel.onmessage = function(event) {
+					// Append message to our transcript.
+					var messagesNode = $('#messages');
+					// NOTE: You should sanitize `event.data` so peer cannot perform a script injection attack! 
+					$('<div>' + event.data + '</div>').appendTo(messagesNode);
+					messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
+				};
+		    }
+
 			// Initialize a WebRTC connection.
 			function init() {
-				peerConnection = new WEBRTC_SHIM.PeerConnection(WEBRTC_SHIM.PeerConnConfig);
+				peerConnection = new WEBRTC_SHIM.PeerConnection(WEBRTC_SHIM.PeerConnConfig, {
+					optional: [ { RtpDataChannels: true } ]
+				});
 
 				// Send ICE candidates for NAT traversal negotiation to the other peer.
-				peerConnection.onicecandidate = function(evt) {
-			        if (!evt.candidate) return;
+				peerConnection.onicecandidate = function(event) {
+			        if (!event.candidate) return;
 					rolodexPresence.sendMessage(peerContact, {
 						type: 'candidate',
-						data: evt.candidate
+						data: event.candidate
 					});
 			    };
 
 				// When remote stream arrives, show it in the remote video element.
-				peerConnection.onaddstream = function (evt) {
-					$('#remoteVideo').attr('src', WEBRTC_SHIM.URL.createObjectURL(evt.stream));
+				peerConnection.onaddstream = function (event) {
+					$('#remoteVideo').attr('src', WEBRTC_SHIM.URL.createObjectURL(event.stream));
 				};
 
-				// Show video & chat UI.
+				// Setup data channel for text messaging.
+		        if (mode === 'offer') {
+					try {
+						// NOTE: This must be called before creating an offer below in order to
+						//		 include the data channel in the connection negotiation.
+						peerChannel = peerConnection.createDataChannel('messaging', {
+							// Reliable (TCP-like) data channel is not yet supported.
+							reliable: false
+						});
+					} catch (err) {
+						fail(err);
+					}
+		        } else
+		        if (mode === 'answer') {
+		        	// When peer open data channel.
+		        	peerConnection.ondatachannel = function(event) {
+		        		peerChannel = event.channel;
+		        		attachToPeerChannel();
+		        	}
+		        }
+
+				// Show call control UI.
 				$('#call > DIV:nth-child(2)').show();
 
 				// Request access to local webcam and microphone.
@@ -337,6 +407,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 				    // Use peer connection to obtain an offer session description.
 			        if (mode === 'offer') {
 				        peerConnection.createOffer(broadcastSessionDescription, fail);
+				        attachToPeerChannel();
 				    } else
 			        if (mode === 'answer') {
 			        	sendAnswer();
@@ -375,9 +446,13 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 						peerSession.end();
 					}
 				},
+				// Send a text message to the peer.
+				sendMessage: function(message) {
+					peerChannel.send(message);
+				},
 				// User requested session to end.
 				end: function() {
-					// Hide video & chat UI.
+					// Hide call control UI.
 					$('#call > DIV:nth-child(2)').hide();
 					$('#remoteVideo').attr('src', '');
 					$('#localVideo').attr('src', '');
