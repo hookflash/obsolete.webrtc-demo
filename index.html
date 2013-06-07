@@ -10,14 +10,14 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 <script src="http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.5/require.min.js"></script>
 <script>
-	// Alias dependencies for our client.
-	require.config({
-	    paths: {
-	        'webrtc-shim':      'https://raw.github.com/openpeer/webrtc-shim/v0.1.1/webrtc-shim',
-	        'rolodex':          'http://webrtc.hookflash.me/.openpeer-rolodex/client',
-	        'rolodex-presence': 'http://webrtc.hookflash.me/.openpeer-rolodex-presence/client'
-	    }
-	});
+    // Alias dependencies for our client.
+    require.config({
+        paths: {
+            'webrtc-shim':      'https://raw.github.com/openpeer/webrtc-shim/v0.1.1/webrtc-shim',
+            'rolodex':          'http://webrtc.hookflash.me/.openpeer-rolodex/client',
+            'rolodex-presence': 'http://webrtc.hookflash.me/.openpeer-rolodex-presence/client'
+        }
+    });
 </script>
 </head><body>
 
@@ -27,500 +27,500 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 ############################################################
 -->
 
-	<div id="loading" class="view">
-		<h1>Loading ...</h1>
-	</div>
+    <div id="loading" class="view">
+        <h1>Loading ...</h1>
+    </div>
 
-	<div id="login" class="view hidden">
-		<h1>Login</h1>
-		<button onClick="window.rolodex.loginService('facebook')">Facebook</button>
-		<button onClick="window.rolodex.loginService('linkedin')">LinkedIn</button>
-		<button onClick="window.rolodex.loginService('twitter')">Twitter</button>
-		<button onClick="window.rolodex.loginService('github')">Github</button>
-	</div>
+    <div id="login" class="view hidden">
+        <h1>Login</h1>
+        <button onClick="window.rolodex.loginService('facebook')">Facebook</button>
+        <button onClick="window.rolodex.loginService('linkedin')">LinkedIn</button>
+        <button onClick="window.rolodex.loginService('twitter')">Twitter</button>
+        <button onClick="window.rolodex.loginService('github')">Github</button>
+    </div>
 
-	<div id="contacts" class="view hidden">
-		<h1>Contacts</h1>
-		<button onClick="window.logout()">Logout</button>
-		<ul></ul>
-		<button onClick="window.refetch()">Refetch</button>
-	</div>
+    <div id="contacts" class="view hidden">
+        <h1>Contacts</h1>
+        <button onClick="window.logout()">Logout</button>
+        <ul></ul>
+        <button onClick="window.refetch()">Refetch</button>
+    </div>
 
-	<div id="call" class="view hidden">
-		<h1>Calling <span></span></h1>
-		<div class="hidden">
-			<button onClick="window.hangup()">Hangup</button>
-			<div>Waiting for peer to connect ...</div>
-			<div class="hidden">
-				<div class="text">
-					<div id="messages"></div>
-					<input id="send" type="text"/>
-				</div>
-				<div class="video">
-					<video id="localVideo" autoplay="autoplay" muted="true"></video>
-					<video id="remoteVideo" autoplay="autoplay"></video>
-				</div>
-			</div>
-		</div>
-		<div id="call-accept-dialog" title="Accept Call ?" class="hidden">
-		  <p>Do you want to accept a call from <span></span></p>
-		</div>
-		<div id="call-declined-dialog" title="Call was declined" class="hidden">
-		  <p><span></span> declined your call.</p>
-		</div>
-		<div id="call-cancel-dialog" title="Calling" class="hidden">
-		  <p>Trying to initiate call to <span></span></p>
-		</div>
-	</div>
+    <div id="call" class="view hidden">
+        <h1>Calling <span></span></h1>
+        <div class="hidden">
+            <button onClick="window.hangup()">Hangup</button>
+            <div>Waiting for peer to connect ...</div>
+            <div class="hidden">
+                <div class="text">
+                    <div id="messages"></div>
+                    <input id="send" type="text"/>
+                </div>
+                <div class="video">
+                    <video id="localVideo" autoplay="autoplay" muted="true"></video>
+                    <video id="remoteVideo" autoplay="autoplay"></video>
+                </div>
+            </div>
+        </div>
+        <div id="call-accept-dialog" title="Accept Call ?" class="hidden">
+          <p>Do you want to accept a call from <span></span></p>
+        </div>
+        <div id="call-declined-dialog" title="Call was declined" class="hidden">
+          <p><span></span> declined your call.</p>
+        </div>
+        <div id="call-cancel-dialog" title="Calling" class="hidden">
+          <p>Trying to initiate call to <span></span></p>
+        </div>
+    </div>
 
 
 <script>
-	// Use RequireJS to load dependencies.
+    // Use RequireJS to load dependencies.
     require([
-	    'webrtc-shim',
-    	'rolodex/client',
-	    'rolodex-presence/client'
+        'webrtc-shim',
+        'rolodex/client',
+        'rolodex-presence/client'
     ], function(WEBRTC_SHIM, ROLODEX, ROLODEX_PRESENCE) {
 
-    	// The service ID for the currently logged in service.
-    	var serviceId = null;
-    	// Reference to a currently active WebRTC session.
-		var peerSession = null;
+        // The service ID for the currently logged in service.
+        var serviceId = null;
+        // Reference to a currently active WebRTC session.
+        var peerSession = null;
 
-	// ############################################################
-	// # Setup Rolodex connection.
-	// ############################################################
+    // ############################################################
+    // # Setup Rolodex connection.
+    // ############################################################
 
-    	// Initialize the rolodex with presence and messaging (for signaling) features.
-	    window.rolodex = new ROLODEX({
-	        baseURL: 'http://webrtc.hookflash.me'
-	    });
-		var rolodexPresence = new ROLODEX_PRESENCE({
-	        baseURL: 'http://webrtc.hookflash.me',
-			rolodex: window.rolodex
-		});
+        // Initialize the rolodex with presence and messaging (for signaling) features.
+        window.rolodex = new ROLODEX({
+            baseURL: 'http://webrtc.hookflash.me'
+        });
+        var rolodexPresence = new ROLODEX_PRESENCE({
+            baseURL: 'http://webrtc.hookflash.me',
+            rolodex: window.rolodex
+        });
 
-	// ############################################################
-	// # Respond to Rolodex Events.
-	// ############################################################
+    // ############################################################
+    // # Respond to Rolodex Events.
+    // ############################################################
 
-	    // If a [identity] service is logged in, render the contacts view.
-	    window.rolodex.on('services.fetched', function(services) {
-	    	for (var _serviceId in services) {
-	    		if (services[_serviceId].loggedin) {
-	    			serviceId = _serviceId;
-	    			switchView('contacts');
-	    			// We only care about the first logged in service as we
-	    			// only support login to one service at a time.
-	    			return;
-	    		}
-	    	}
-	    	// No service is logged in.
-			switchView('login');
-	    });
+        // If a [identity] service is logged in, render the contacts view.
+        window.rolodex.on('services.fetched', function(services) {
+            for (var _serviceId in services) {
+                if (services[_serviceId].loggedin) {
+                    serviceId = _serviceId;
+                    switchView('contacts');
+                    // We only care about the first logged in service as we
+                    // only support login to one service at a time.
+                    return;
+                }
+            }
+            // No service is logged in.
+            switchView('login');
+        });
 
-	    // Update the list of contacts in the contacts view.
-	    function renderContactsList() {
-	    	// Get all peers that are currently online.
-	    	var onlineContacts = rolodexPresence.getOnlineContacts();
-	    	// Get all peers that have used the Rolodex before (as opposed to all contacts).
-	    	window.rolodex.getContacts('*', {
-	    		peerContact: /^peer:/
-	    	}).then(function(contacts) {
-	    		var ul = $('#contacts > UL');
-	    		// Clear the whole contact list.
-	    		ul.html('');
-	    		// Append each contact to the list.
-	    		for (var _serviceId in contacts) {
-	    			for (var _contactId in contacts[_serviceId]) {
-	    				var contact = contacts[_serviceId][_contactId];
-	    				var li = [];
-	    				// Keep track of `peerContact` ID (needed when 'Call' button is clicked).
-	    				li.push('<li contact="' + contact.peerContact + '">');
-		    				li.push('<img src="' + contact.photo + '"/>');
-		    				li.push(contact.fn || contact.nickname);
-		    				// Only include the 'Call' button if contact is online.
-		    				if (onlineContacts[contact.peerContact] === "online") {
-			    				li.push('<button>Call</button>');
-		    				}
-	    				li.push('</li>');
-						$(li.join('')).appendTo(ul);
-	    			}
-	    		}
-	    	});
-	    }
-	    // Fires after contacts are fetched from server.
-	    window.rolodex.on('contacts.fetched', renderContactsList);
-	    // Contact connected to internet.
-	    rolodexPresence.on('contact.online', renderContactsList);
-	    // Contact lost internet connectivity.
-	    rolodexPresence.on('contact.away', renderContactsList);
-	    // Contact got internet connectivity back.
-	    rolodexPresence.on('contact.back', renderContactsList);
-	    // Contact has lost internet connectivity for more than 60 seconds.
-	    rolodexPresence.on('contact.offline', renderContactsList);
+        // Update the list of contacts in the contacts view.
+        function renderContactsList() {
+            // Get all peers that are currently online.
+            var onlineContacts = rolodexPresence.getOnlineContacts();
+            // Get all peers that have used the Rolodex before (as opposed to all contacts).
+            window.rolodex.getContacts('*', {
+                peerContact: /^peer:/
+            }).then(function(contacts) {
+                var ul = $('#contacts > UL');
+                // Clear the whole contact list.
+                ul.html('');
+                // Append each contact to the list.
+                for (var _serviceId in contacts) {
+                    for (var _contactId in contacts[_serviceId]) {
+                        var contact = contacts[_serviceId][_contactId];
+                        var li = [];
+                        // Keep track of `peerContact` ID (needed when 'Call' button is clicked).
+                        li.push('<li contact="' + contact.peerContact + '">');
+                            li.push('<img src="' + contact.photo + '"/>');
+                            li.push(contact.fn || contact.nickname);
+                            // Only include the 'Call' button if contact is online.
+                            if (onlineContacts[contact.peerContact] === "online") {
+                                li.push('<button>Call</button>');
+                            }
+                        li.push('</li>');
+                        $(li.join('')).appendTo(ul);
+                    }
+                }
+            });
+        }
+        // Fires after contacts are fetched from server.
+        window.rolodex.on('contacts.fetched', renderContactsList);
+        // Contact connected to internet.
+        rolodexPresence.on('contact.online', renderContactsList);
+        // Contact lost internet connectivity.
+        rolodexPresence.on('contact.away', renderContactsList);
+        // Contact got internet connectivity back.
+        rolodexPresence.on('contact.back', renderContactsList);
+        // Contact has lost internet connectivity for more than 60 seconds.
+        rolodexPresence.on('contact.offline', renderContactsList);
 
-	    // A signaling message arrived from a contact.
-		rolodexPresence.on('contact.message', function(peerContact, message) {
-			// A peer is requesting to start a session.
-			if (message.type === 'offer') {
-				setupPeerSession(peerContact, 'answer');
-			} else
-			// Handle signal for an existing session.
-			if (peerSession) {
-				peerSession.onSignal(message.type, message.data);
-			}
-			if (message.type === 'decline') {
-				// Let user know that call was declined.
-				$('#call-declined-dialog').dialog({
-					dialogClass: 'call-declined-dialog',
-					closeOnEscape: false,
-					resizable: false,
-					width: 600,
-					height: 165,
-					modal: true,
-					buttons: {
-						"Ok": function() {
-							$(this).dialog('close');
-						}
-					}
-				});
-			}
-		});
+        // A signaling message arrived from a contact.
+        rolodexPresence.on('contact.message', function(peerContact, message) {
+            // A peer is requesting to start a session.
+            if (message.type === 'offer') {
+                setupPeerSession(peerContact, 'answer');
+            } else
+            // Handle signal for an existing session.
+            if (peerSession) {
+                peerSession.onSignal(message.type, message.data);
+            }
+            if (message.type === 'decline') {
+                // Let user know that call was declined.
+                $('#call-declined-dialog').dialog({
+                    dialogClass: 'call-declined-dialog',
+                    closeOnEscape: false,
+                    resizable: false,
+                    width: 600,
+                    height: 165,
+                    modal: true,
+                    buttons: {
+                        "Ok": function() {
+                            $(this).dialog('close');
+                        }
+                    }
+                });
+            }
+        });
 
-	// ############################################################
-	// # Render Views.
-	// ############################################################
+    // ############################################################
+    // # Render Views.
+    // ############################################################
 
-		// The default view.
-	    var rendered = 'loading';
+        // The default view.
+        var rendered = 'loading';
 
-	    function switchView(view, contextId) {
-	    	// Ignore repeat calls
-	    	if (rendered === view) return;
+        function switchView(view, contextId) {
+            // Ignore repeat calls
+            if (rendered === view) return;
 
-	    	// Show DIV for requested view
-	    	$('#' + rendered).addClass('hidden');
-	    	$('#' + view).removeClass('hidden');
-	    	rendered = view;
+            // Show DIV for requested view
+            $('#' + rendered).addClass('hidden');
+            $('#' + view).removeClass('hidden');
+            rendered = view;
 
-	    	// View has changed.
+            // View has changed.
 
-	    	// Deal with specific views.
-	    	if (view === 'contacts') {
-	    		var serviceId = contextId;
-	    		// Keep track of `serviceId` as later calls to show 'contacts' view
-	    		// may not include a `serviceId` (e.g. when hanging up).
-	    		if (serviceId) $('#contacts').attr('service', serviceId);
-	    		// Declare functions called from view HTML.
-				window.refetch = function() {
-					// If contact added/removed on [identity] service this will sync changes to our client.
-					window.rolodex.refetchContacts($('#contacts').attr('service')).then(function(data) {
-						if (data.error) {
-							alert(data.error.message);
-						}
-					});
-				}
-				window.logout = function() {
-					window.rolodex.logoutService($('#contacts').attr('service'));
-				}
-			} else
-	    	if (view === 'call') {
-		    	// Reset state.
-		    	try {
-			    	$('#call-declined-dialog').dialog('close');
-			    } catch(err) {}
-	    		var peerContact = contextId;
-	    		// Obtain details for peer contact by ID.
-	    		rolodex.getContact(peerContact).then(function(contact) {
-	    			// Set name/nickname of contact in view HTML.
-		    		$('#call > H1 > SPAN').html(contact.fn || contact.nickname);
-		    		$('#call-accept-dialog > P > SPAN').html(contact.fn || contact.nickname);
-		    		$('#call-declined-dialog > P > SPAN').html(contact.fn || contact.nickname);
-		    		$('#call-cancel-dialog > P > SPAN').html(contact.fn || contact.nickname);
-		    		// Declare function called from view HTML.
-					window.hangup = function() {
-						peerSession.end();
-					}
-	    		});
-	    	}
-	    }
+            // Deal with specific views.
+            if (view === 'contacts') {
+                var serviceId = contextId;
+                // Keep track of `serviceId` as later calls to show 'contacts' view
+                // may not include a `serviceId` (e.g. when hanging up).
+                if (serviceId) $('#contacts').attr('service', serviceId);
+                // Declare functions called from view HTML.
+                window.refetch = function() {
+                    // If contact added/removed on [identity] service this will sync changes to our client.
+                    window.rolodex.refetchContacts($('#contacts').attr('service')).then(function(data) {
+                        if (data.error) {
+                            alert(data.error.message);
+                        }
+                    });
+                }
+                window.logout = function() {
+                    window.rolodex.logoutService($('#contacts').attr('service'));
+                }
+            } else
+            if (view === 'call') {
+                // Reset state.
+                try {
+                    $('#call-declined-dialog').dialog('close');
+                } catch(err) {}
+                var peerContact = contextId;
+                // Obtain details for peer contact by ID.
+                rolodex.getContact(peerContact).then(function(contact) {
+                    // Set name/nickname of contact in view HTML.
+                    $('#call > H1 > SPAN').html(contact.fn || contact.nickname);
+                    $('#call-accept-dialog > P > SPAN').html(contact.fn || contact.nickname);
+                    $('#call-declined-dialog > P > SPAN').html(contact.fn || contact.nickname);
+                    $('#call-cancel-dialog > P > SPAN').html(contact.fn || contact.nickname);
+                    // Declare function called from view HTML.
+                    window.hangup = function() {
+                        peerSession.end();
+                    }
+                });
+            }
+        }
 
-	    // Handle click on 'Call' buttons to call a contact.
-		$('#contacts > UL').click(function(evt) {
-			// Ensure click was on BUTTON instead of LI.
-			var peerContact = $(evt.target).parent().attr('contact');
-			if (!peerContact) return;
-			// Initiate a call to contact.
-			setupPeerSession(peerContact, 'offer');
-		});
+        // Handle click on 'Call' buttons to call a contact.
+        $('#contacts > UL').click(function(evt) {
+            // Ensure click was on BUTTON instead of LI.
+            var peerContact = $(evt.target).parent().attr('contact');
+            if (!peerContact) return;
+            // Initiate a call to contact.
+            setupPeerSession(peerContact, 'offer');
+        });
 
-		// Handle sending of text messages.
-		$('#send').keydown(function(key) {
-			if (key.keyCode !== 13) return;  // 'Return' key
-			// Obtain the message to be sent from the input field.
-			var message = $(this).val();
-			// Send the message to the peer.
-			peerSession.sendMessage(message);
-			// Append message to our transcript and clear the input field.
-			var messagesNode = $('#messages');
-			$('<div class="sent">' + message + '</div>').appendTo(messagesNode);
-			messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
-			$(this).val("");
-			// Ignore the `Return` key that was just pressed.
-			return false;
-		});
+        // Handle sending of text messages.
+        $('#send').keydown(function(key) {
+            if (key.keyCode !== 13) return;  // 'Return' key
+            // Obtain the message to be sent from the input field.
+            var message = $(this).val();
+            // Send the message to the peer.
+            peerSession.sendMessage(message);
+            // Append message to our transcript and clear the input field.
+            var messagesNode = $('#messages');
+            $('<div class="sent">' + message + '</div>').appendTo(messagesNode);
+            messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
+            $(this).val("");
+            // Ignore the `Return` key that was just pressed.
+            return false;
+        });
 
-	// ############################################################
-	// # Setup peer session using WebRTC.
-	// ############################################################
+    // ############################################################
+    // # Setup peer session using WebRTC.
+    // ############################################################
 
-		// @see http://www.html5rocks.com/en/tutorials/webrtc/basics/
+        // @see http://www.html5rocks.com/en/tutorials/webrtc/basics/
 
-		function setupPeerSession(peerContact, mode) {
+        function setupPeerSession(peerContact, mode) {
 
-			switchView('call', peerContact);
+            switchView('call', peerContact);
 
-			if (mode === 'offer') {
-				// Send offer signal to peer.
-				rolodexPresence.sendMessage(peerContact, {
-					type: 'offer'
-				});
-				$('#call-cancel-dialog').dialog({
-					dialogClass: 'call-cancel-dialog',
-					closeOnEscape: false,
-					resizable: false,
-					width: 600,
-					height: 165,
-					modal: true,
-					buttons: {
-						"Cancel": function() {
-							$(this).dialog('close');
-							peerSession.end();
-						}
-					}
-				});				
-			} else
-			if (mode === 'answer') {
-				// Give user a chance to decline call.
-				$('#call-accept-dialog').dialog({
-					dialogClass: 'call-accept-dialog',
-					closeOnEscape: false,
-					resizable: false,
-					width: 600,
-					height: 165,
-					modal: true,
-					buttons: {
-						"Accept": function() {
-							$(this).dialog('close');
-							// Send accept signal to peer.
-							rolodexPresence.sendMessage(peerContact, {
-								type: 'accept'
-							});
-							init();
-						},
-						"Decline": function() {
-							$(this).dialog('close');
-							peerSession.end();
-							// Send decline signal to peer.
-							rolodexPresence.sendMessage(peerContact, {
-								type: 'decline'
-							});
-						}
-					}
-				});
-			}
+            if (mode === 'offer') {
+                // Send offer signal to peer.
+                rolodexPresence.sendMessage(peerContact, {
+                    type: 'offer'
+                });
+                $('#call-cancel-dialog').dialog({
+                    dialogClass: 'call-cancel-dialog',
+                    closeOnEscape: false,
+                    resizable: false,
+                    width: 600,
+                    height: 165,
+                    modal: true,
+                    buttons: {
+                        "Cancel": function() {
+                            $(this).dialog('close');
+                            peerSession.end();
+                        }
+                    }
+                });                
+            } else
+            if (mode === 'answer') {
+                // Give user a chance to decline call.
+                $('#call-accept-dialog').dialog({
+                    dialogClass: 'call-accept-dialog',
+                    closeOnEscape: false,
+                    resizable: false,
+                    width: 600,
+                    height: 165,
+                    modal: true,
+                    buttons: {
+                        "Accept": function() {
+                            $(this).dialog('close');
+                            // Send accept signal to peer.
+                            rolodexPresence.sendMessage(peerContact, {
+                                type: 'accept'
+                            });
+                            init();
+                        },
+                        "Decline": function() {
+                            $(this).dialog('close');
+                            peerSession.end();
+                            // Send decline signal to peer.
+                            rolodexPresence.sendMessage(peerContact, {
+                                type: 'decline'
+                            });
+                        }
+                    }
+                });
+            }
 
-			// The webRTC peer connection.
-			var peerConnection = null;
-			// A WebRTC data channel for sending messages.
-			var peerChannel = null;
-			// Our local webcam & audio stream.
-			var localStream = null;
+            // The webRTC peer connection.
+            var peerConnection = null;
+            // A WebRTC data channel for sending messages.
+            var peerChannel = null;
+            // Our local webcam & audio stream.
+            var localStream = null;
 
-			function fail(err) {
-				console.error(err, err.stack);
-				alert('Failure code: ' + err.code);
-			}
+            function fail(err) {
+                console.error(err, err.stack);
+                alert('Failure code: ' + err.code);
+            }
 
-			// Called with the session description obtained after creating
-			// an offer or answer on the peer connection.
-		    function broadcastSessionDescription(sessionDescription) {
-		    	// Let our local peer connection know the session description we want to use.
-		        peerConnection.setLocalDescription(sessionDescription);
-		        // Also send the session description to the peer.
-				rolodexPresence.sendMessage(peerContact, {
-					type: 'session-description',
-					data: sessionDescription
-				});
-		    }
+            // Called with the session description obtained after creating
+            // an offer or answer on the peer connection.
+            function broadcastSessionDescription(sessionDescription) {
+                // Let our local peer connection know the session description we want to use.
+                peerConnection.setLocalDescription(sessionDescription);
+                // Also send the session description to the peer.
+                rolodexPresence.sendMessage(peerContact, {
+                    type: 'session-description',
+                    data: sessionDescription
+                });
+            }
 
-		    // The answer can only be sent once `peerConnection.addStream` and
-		    // `peerConnection.setRemoteDescription` has been called.
-		    // We call this function after both of the above functions so on the
-		    // second call we are ready to send the answer.
-		    var sendAnswer_count = 0;
-		    function sendAnswer() {
-		    	sendAnswer_count += 1;
-		    	if (sendAnswer_count != 2) return;
-	        	// Now that we have the session description from the offering peer
-	        	// and our local video & audio stream is attached we create
-	        	// an answer session description.
-				peerConnection.createAnswer(broadcastSessionDescription, fail);
-		    }
+            // The answer can only be sent once `peerConnection.addStream` and
+            // `peerConnection.setRemoteDescription` has been called.
+            // We call this function after both of the above functions so on the
+            // second call we are ready to send the answer.
+            var sendAnswer_count = 0;
+            function sendAnswer() {
+                sendAnswer_count += 1;
+                if (sendAnswer_count != 2) return;
+                // Now that we have the session description from the offering peer
+                // and our local video & audio stream is attached we create
+                // an answer session description.
+                peerConnection.createAnswer(broadcastSessionDescription, fail);
+            }
 
-		    // Called once we have a data channel object and media streams are connected.
-		    function attachToPeerChannel() {
-		    	// We use the open and close events to determine when the connection is established.
-				peerChannel.onopen = function() {
-					// Show video & text messaging UI.
-					$('#call > DIV:nth-child(2) > DIV:nth-child(3)').show();
-				};
-				peerChannel.onclose = function() {
-					// Hide video & text messaging UI.
-					$('#call > DIV:nth-child(2) > DIV:nth-child(3)').hide();
-				};
-				peerChannel.onmessage = function(event) {
-					// Append message to our transcript.
-					var messagesNode = $('#messages');
-					// NOTE: You should sanitize `event.data` so peer cannot perform a script injection attack! 
-					$('<div>' + event.data + '</div>').appendTo(messagesNode);
-					messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
-				};
-		    }
+            // Called once we have a data channel object and media streams are connected.
+            function attachToPeerChannel() {
+                // We use the open and close events to determine when the connection is established.
+                peerChannel.onopen = function() {
+                    // Show video & text messaging UI.
+                    $('#call > DIV:nth-child(2) > DIV:nth-child(3)').show();
+                };
+                peerChannel.onclose = function() {
+                    // Hide video & text messaging UI.
+                    $('#call > DIV:nth-child(2) > DIV:nth-child(3)').hide();
+                };
+                peerChannel.onmessage = function(event) {
+                    // Append message to our transcript.
+                    var messagesNode = $('#messages');
+                    // NOTE: You should sanitize `event.data` so peer cannot perform a script injection attack! 
+                    $('<div>' + event.data + '</div>').appendTo(messagesNode);
+                    messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
+                };
+            }
 
-			// Initialize a WebRTC connection.
-			function init() {
-				peerConnection = new WEBRTC_SHIM.PeerConnection(WEBRTC_SHIM.PeerConnConfig, {
-					optional: [ { RtpDataChannels: true } ]
-				});
+            // Initialize a WebRTC connection.
+            function init() {
+                peerConnection = new WEBRTC_SHIM.PeerConnection(WEBRTC_SHIM.PeerConnConfig, {
+                    optional: [ { RtpDataChannels: true } ]
+                });
 
-				// Send ICE candidates for NAT traversal negotiation to the other peer.
-				peerConnection.onicecandidate = function(event) {
-			        if (!event.candidate) return;
-					rolodexPresence.sendMessage(peerContact, {
-						type: 'candidate',
-						data: event.candidate
-					});
-			    };
+                // Send ICE candidates for NAT traversal negotiation to the other peer.
+                peerConnection.onicecandidate = function(event) {
+                    if (!event.candidate) return;
+                    rolodexPresence.sendMessage(peerContact, {
+                        type: 'candidate',
+                        data: event.candidate
+                    });
+                };
 
-				// When remote stream arrives, show it in the remote video element.
-				peerConnection.onaddstream = function (event) {
-					$('#remoteVideo').attr('src', WEBRTC_SHIM.URL.createObjectURL(event.stream));
-				};
+                // When remote stream arrives, show it in the remote video element.
+                peerConnection.onaddstream = function (event) {
+                    $('#remoteVideo').attr('src', WEBRTC_SHIM.URL.createObjectURL(event.stream));
+                };
 
-				// Setup data channel for text messaging.
-		        if (mode === 'offer') {
-					try {
-						// NOTE: This must be called before creating an offer below in order to
-						//		 include the data channel in the connection negotiation.
-						peerChannel = peerConnection.createDataChannel('messaging', {
-							// Reliable (TCP-like) data channel is not yet supported.
-							reliable: false
-						});
-					} catch (err) {
-						fail(err);
-					}
-		        } else
-		        if (mode === 'answer') {
-		        	// When peer open data channel.
-		        	peerConnection.ondatachannel = function(event) {
-		        		peerChannel = event.channel;
-		        		attachToPeerChannel();
-		        	}
-		        }
+                // Setup data channel for text messaging.
+                if (mode === 'offer') {
+                    try {
+                        // NOTE: This must be called before creating an offer below in order to
+                        //         include the data channel in the connection negotiation.
+                        peerChannel = peerConnection.createDataChannel('messaging', {
+                            // Reliable (TCP-like) data channel is not yet supported.
+                            reliable: false
+                        });
+                    } catch (err) {
+                        fail(err);
+                    }
+                } else
+                if (mode === 'answer') {
+                    // When peer open data channel.
+                    peerConnection.ondatachannel = function(event) {
+                        peerChannel = event.channel;
+                        attachToPeerChannel();
+                    }
+                }
 
-				// Show call control UI.
-				$('#call > DIV:nth-child(2)').show();
+                // Show call control UI.
+                $('#call > DIV:nth-child(2)').show();
 
-				// Request access to local webcam and microphone.
-				WEBRTC_SHIM.getUserMedia({
-					"audio": true,
-					"video": true
-				}, function (stream) {
-					localStream = stream;
+                // Request access to local webcam and microphone.
+                WEBRTC_SHIM.getUserMedia({
+                    "audio": true,
+                    "video": true
+                }, function (stream) {
+                    localStream = stream;
 
-					// Show video stream in the local video element (audio gets attached as well).
-				    $('#localVideo').attr('src', WEBRTC_SHIM.URL.createObjectURL(localStream));
+                    // Show video stream in the local video element (audio gets attached as well).
+                    $('#localVideo').attr('src', WEBRTC_SHIM.URL.createObjectURL(localStream));
 
-				    // Attach local video & audio stream to connection to stream it to peer.
-				    peerConnection.addStream(localStream);
+                    // Attach local video & audio stream to connection to stream it to peer.
+                    peerConnection.addStream(localStream);
 
-				    // Use peer connection to obtain an offer session description.
-			        if (mode === 'offer') {
-				        peerConnection.createOffer(broadcastSessionDescription, fail);
-				        attachToPeerChannel();
-				    } else
-			        if (mode === 'answer') {
-			        	sendAnswer();
-			        }
-				}, function (err) {
-					alert('Failed to get access to local media. Error code was ' + err.code + '.');
-				});
-			}
+                    // Use peer connection to obtain an offer session description.
+                    if (mode === 'offer') {
+                        peerConnection.createOffer(broadcastSessionDescription, fail);
+                        attachToPeerChannel();
+                    } else
+                    if (mode === 'answer') {
+                        sendAnswer();
+                    }
+                }, function (err) {
+                    alert('Failed to get access to local media. Error code was ' + err.code + '.');
+                });
+            }
 
-			// Assemble a helper object for easier integration with app.
-			peerSession = {
-				// A signal arrived from the peer.
-				onSignal: function(type, data) {
-					// Our offer was declined.
-					if (type === 'decline') {
-						peerSession.end();
-					} else
-					// Our offer was accepted.
-					if (type === 'accept') {
-						// Reset state.
-				    	try {
-					    	$('#call-cancel-dialog').dialog('close');
-					    } catch(err) {}
-						init();
-					} else
-					// Peer sent ICE candidate.
-					if (type === 'candidate') {
-				        peerConnection.addIceCandidate(new WEBRTC_SHIM.IceCandidate(data));
-					} else
-					// Peer sent session description.
-					if (type === 'session-description') {
-				        peerConnection.setRemoteDescription(new WEBRTC_SHIM.SessionDescription(data));
-				        if (mode === 'answer') {
-				        	sendAnswer();
-				        }
-					} else
-					// Peer requested to end the session.
-					if (type === 'hangup') {
-						peerSession.end();
-					}
-				},
-				// Send a text message to the peer.
-				sendMessage: function(message) {
-					peerChannel.send(message);
-				},
-				// User requested session to end.
-				end: function() {
-					// Hide call control UI.
-					$('#call > DIV:nth-child(2)').hide();
-					$('#remoteVideo').attr('src', '');
-					$('#localVideo').attr('src', '');
-					// Reset state.
-			    	try {
-				    	$('#call-accept-dialog').dialog('close');
-				    } catch(err) {}
-			    	try {
-				    	$('#call-cancel-dialog').dialog('close');
-				    } catch(err) {}
-					switchView('contacts');
-					// Release access to local webcam and microphone.
-					if (localStream) localStream.stop();
-					// Close connection with peer.
-					if (peerConnection) peerConnection.close();
-					// Signal peer that we have ended the session.
-					rolodexPresence.sendMessage(peerContact, {
-						type: 'hangup'
-					});
-					peerSession = null;
-				}
-			};
-		}
+            // Assemble a helper object for easier integration with app.
+            peerSession = {
+                // A signal arrived from the peer.
+                onSignal: function(type, data) {
+                    // Our offer was declined.
+                    if (type === 'decline') {
+                        peerSession.end();
+                    } else
+                    // Our offer was accepted.
+                    if (type === 'accept') {
+                        // Reset state.
+                        try {
+                            $('#call-cancel-dialog').dialog('close');
+                        } catch(err) {}
+                        init();
+                    } else
+                    // Peer sent ICE candidate.
+                    if (type === 'candidate') {
+                        peerConnection.addIceCandidate(new WEBRTC_SHIM.IceCandidate(data));
+                    } else
+                    // Peer sent session description.
+                    if (type === 'session-description') {
+                        peerConnection.setRemoteDescription(new WEBRTC_SHIM.SessionDescription(data));
+                        if (mode === 'answer') {
+                            sendAnswer();
+                        }
+                    } else
+                    // Peer requested to end the session.
+                    if (type === 'hangup') {
+                        peerSession.end();
+                    }
+                },
+                // Send a text message to the peer.
+                sendMessage: function(message) {
+                    peerChannel.send(message);
+                },
+                // User requested session to end.
+                end: function() {
+                    // Hide call control UI.
+                    $('#call > DIV:nth-child(2)').hide();
+                    $('#remoteVideo').attr('src', '');
+                    $('#localVideo').attr('src', '');
+                    // Reset state.
+                    try {
+                        $('#call-accept-dialog').dialog('close');
+                    } catch(err) {}
+                    try {
+                        $('#call-cancel-dialog').dialog('close');
+                    } catch(err) {}
+                    switchView('contacts');
+                    // Release access to local webcam and microphone.
+                    if (localStream) localStream.stop();
+                    // Close connection with peer.
+                    if (peerConnection) peerConnection.close();
+                    // Signal peer that we have ended the session.
+                    rolodexPresence.sendMessage(peerContact, {
+                        type: 'hangup'
+                    });
+                    peerSession = null;
+                }
+            };
+        }
     });
 </script>
 </body></html>

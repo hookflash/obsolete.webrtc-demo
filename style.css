@@ -1,134 +1,134 @@
 HTML, BODY {
-	padding: 0px;
-	margin: 0px;
-	font-size: 12px;
-	font-family: Tahoma;
+    padding: 0px;
+    margin: 0px;
+    font-size: 12px;
+    font-family: Tahoma;
 }
 
 .hidden {
-	display: none;
+    display: none;
 }
 
 BUTTON {
-	font-size: 16px;
+    font-size: 16px;
 }
 
 DIV.view {
-	margin: 50px;
+    margin: 50px;
 }
 
 UL {
-	margin-top: 18px;
-	margin-bottom: 18px;
-	list-style: none;
-	padding: 2px;
+    margin-top: 18px;
+    margin-bottom: 18px;
+    list-style: none;
+    padding: 2px;
 }
 
 #contacts > UL > LI {
-	font-size: 18px;
-	height: 50px;
-	line-height: 50px;
-	vertical-align: middle;
-	margin-bottom: 5px;
+    font-size: 18px;
+    height: 50px;
+    line-height: 50px;
+    vertical-align: middle;
+    margin-bottom: 5px;
 }
 #contacts > UL > LI:hover {
-	background-color: #ececec;
+    background-color: #ececec;
 }
 
 #contacts > UL > LI > IMG {
-	width: 50px;
-	height: 50px;
-	margin-right: 20px;	
-	float: left;
+    width: 50px;
+    height: 50px;
+    margin-right: 20px;    
+    float: left;
 }
 
 #contacts > UL > LI > BUTTON {
-	margin-left: 20px;
+    margin-left: 20px;
 }
 
 #call > DIV:nth-child(2) > DIV:nth-child(2) {
-	font-size: 18px;
-	position: relative;
-	z-index: -10;
-	left: 50px;
-	top: 50px;
+    font-size: 18px;
+    position: relative;
+    z-index: -10;
+    left: 50px;
+    top: 50px;
 }
 
 #call > DIV:nth-child(2) > DIV:nth-child(3) {
-	background-color: #ffffff;
+    background-color: #ffffff;
 }
 
 #call > DIV:nth-child(2) > DIV:nth-child(3) > DIV.video {
-	display: inline-block;
-	position: relative;
-	float: left;
-	width: 335px;
-	height: 250px;
+    display: inline-block;
+    position: relative;
+    float: left;
+    width: 335px;
+    height: 250px;
 }
 
 #localVideo {
-	position: absolute;
-	height: 30%;
-	width: 30%;
-	bottom: 10px;
-	right: 10px;
-	border: 1px solid black;
-	z-index: 10px;
+    position: absolute;
+    height: 30%;
+    width: 30%;
+    bottom: 10px;
+    right: 10px;
+    border: 1px solid black;
+    z-index: 10px;
 }
 
 #remoteVideo {
-	border: 1px solid black;
-	width: 100%;
-	height: 100%;
+    border: 1px solid black;
+    width: 100%;
+    height: 100%;
 }
 
 #call > DIV:nth-child(2) > DIV:nth-child(3) > DIV.text {
-	display: inline-block;
-	position: relative;
-	margin-left: 20px;
-	width: 335px;
+    display: inline-block;
+    position: relative;
+    margin-left: 20px;
+    width: 335px;
 }
 
 #messages {
-	border: 1px solid black;
-	border-bottom: 0px;
-	width: 100%;
-	height: 227px;
-	box-sizing: border-box;
-	overflow-y: scroll;
-	font-size: 16px;
+    border: 1px solid black;
+    border-bottom: 0px;
+    width: 100%;
+    height: 227px;
+    box-sizing: border-box;
+    overflow-y: scroll;
+    font-size: 16px;
 }
 
 #messages > DIV {
-	margin: 3px;
-	padding-left: 10px;
-	padding-right: 10px;
-	text-align: left;
-	font-weight: bold;
+    margin: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: left;
+    font-weight: bold;
 }
 
 #messages > DIV.sent {
-	text-align: right;
-	font-weight: normal;
-	color: #bcbcbc;
+    text-align: right;
+    font-weight: normal;
+    color: #bcbcbc;
 }
 
 #send {
-	border: 1px solid black;
-	width: 100%;
-	height: 25px;
-	padding-left: 5px;
-	padding-right: 5px;
-	font-size: 16px;
+    border: 1px solid black;
+    width: 100%;
+    height: 25px;
+    padding-left: 5px;
+    padding-right: 5px;
+    font-size: 16px;
 }
 
 BUTTON.ui-dialog-titlebar-close {
-	display: none;
+    display: none;
 }
 
 DIV.call-accept-dialog > DIV.ui-dialog-content,
 DIV.call-declined-dialog > DIV.ui-dialog-content,
 DIV.call-cancel-dialog > DIV.ui-dialog-content {
-	font-size: 18px;
-	overflow: hidden;
+    font-size: 18px;
+    overflow: hidden;
 }
