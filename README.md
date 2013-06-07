@@ -21,7 +21,7 @@ Features:
 
 The entire demo code is contained in one static HTML file: https://github.com/openpeer/webrtc-demo/blob/master/index.html
 
-You can try the demo online at: http://webrtcdemo-hookflash.dotcloud.com/
+You can try the demo online at: http://openpeer.github.io/webrtc-demo/
 
 Usage
 -----
@@ -37,12 +37,12 @@ Install & run locally:
     npm start
     open http://localhost:8080/
 
-Deploy to [dotcloud](https://www.dotcloud.com/):
+Deploy demo to github pages:
 
-    sudo easy_install pip && sudo pip install dotcloud
-    dotcloud setup
-    dotcloud create webrtcdemo
-    dotcloud push
+    git checkout gh-pages
+    git merge master
+    git push origin gh-pages
+    git checkout master
 
 License
 =======
