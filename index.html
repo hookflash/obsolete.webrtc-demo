@@ -286,6 +286,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                 rolodexPresence.sendMessage(peerContact, {
                     type: 'offer'
                 });
+                // Give user a chance to cancel the offer.
                 $('#call-cancel-dialog').dialog({
                     dialogClass: 'call-cancel-dialog',
                     closeOnEscape: false,
@@ -299,10 +300,10 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                             peerSession.end();
                         }
                     }
-                });                
+                });
             } else
             if (mode === 'answer') {
-                // Give user a chance to decline call.
+                // Give user a chance to decline the offer.
                 $('#call-accept-dialog').dialog({
                     dialogClass: 'call-accept-dialog',
                     closeOnEscape: false,
