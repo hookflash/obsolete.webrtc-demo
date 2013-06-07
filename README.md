@@ -1,6 +1,8 @@
 Minimal WebRTC Demo
 ===================
 
+Try it online: http://openpeer.github.io/webrtc-demo/
+
 A [WebRTC](http://dev.w3.org/2011/webrtc/editor/webrtc.html) demo using:
 
   * jQuery - http://jquery.com/
@@ -21,8 +23,6 @@ Features:
 
 The entire demo code is contained in one static HTML file: https://github.com/openpeer/webrtc-demo/blob/master/index.html
 
-You can try the demo online at: http://openpeer.github.io/webrtc-demo/
-
 Usage
 -----
 
@@ -37,7 +37,7 @@ Install & run locally:
     npm start
     open http://localhost:8080/
 
-Deploy demo to github pages:
+Deploy to [github pages](http://pages.github.com/):
 
     git checkout gh-pages
     git merge master
