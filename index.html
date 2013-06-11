@@ -77,6 +77,9 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
         </div>
     </div>
 
+    <div id="logout" class="view hidden">
+        <h1>More recent login at another location</h1>
+    </div>
 
 <script>
     // Use RequireJS to load dependencies.
@@ -206,6 +209,13 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     }
                 });
             }
+        });
+
+        // Logout/lock UI as user logged in at a different location/browser page.
+        rolodexPresence.on("logout", function() {
+            if (peerSession) peerSession.end();
+            serviceId = null;
+            switchView('logout');
         });
 
     // ############################################################
