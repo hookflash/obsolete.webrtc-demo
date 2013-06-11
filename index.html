@@ -144,7 +144,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                             li.push('<img src="' + contact.photo + '"/>');
                             li.push(contact.fn || contact.nickname);
                             // Only include the 'Call' button if contact is online.
-                            if (onlineContacts[contact.peerContact] === "online") {
+                            if (onlineContacts[contact.peerContact] === 'online') {
                                 li.push('<button>Call</button>');
                             }
                         li.push('</li>');
@@ -288,8 +288,8 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
             // Append message to our transcript and clear the input field.
             var messagesNode = $('#messages');
             $('<div class="sent">' + message + '</div>').appendTo(messagesNode);
-            messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
-            $(this).val("");
+            messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, 'fast');
+            $(this).val('');
             // Ignore the `Return` key that was just pressed.
             return false;
         });
@@ -318,7 +318,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     height: 165,
                     modal: true,
                     buttons: {
-                        "Cancel": function() {
+                        "Hangup": function() {
                             $(this).dialog('close');
                             peerSession.end();
                         }
@@ -409,7 +409,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     var messagesNode = $('#messages');
                     // NOTE: You should sanitize `event.data` so peer cannot perform a script injection attack! 
                     $('<div>' + event.data + '</div>').appendTo(messagesNode);
-                    messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, "fast");
+                    messagesNode.animate({"scrollTop": messagesNode[0].scrollHeight}, 'fast');
                 };
             }
 
@@ -419,9 +419,16 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     optional: [ { RtpDataChannels: true } ]
                 });
 
-                // Send ICE candidates for NAT traversal negotiation to the other peer.
+                // Send ICE candidates for NAT traversal negotiation to the other peer as
+                // they trickle in. This is faster than waiting for all ICE candidates as
+                // connection can be established as soon as one ICE candidate results in
+                // a successful connection.
                 peerConnection.onicecandidate = function(event) {
-                    if (!event.candidate) return;
+                    if (!event.candidate) {
+                        // ICE candidate gathering complete which we ignore as we have been
+                        // sending each candidate as it comes in.
+                        return;
+                    }
                     rolodexPresence.sendMessage(peerContact, {
                         type: 'candidate',
                         data: event.candidate
@@ -459,8 +466,8 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
 
                 // Request access to local webcam and microphone.
                 WEBRTC_SHIM.getUserMedia({
-                    "audio": true,
-                    "video": true
+                    'audio': true,
+                    'video': true
                 }, function (stream) {
                     localStream = stream;
 
@@ -478,9 +485,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     if (mode === 'answer') {
                         sendAnswer();
                     }
-                }, function (err) {
-                    alert('Failed to get access to local media. Error code was ' + err.code + '.');
-                });
+                }, fail);
             }
 
             // Assemble a helper object for easier integration with app.
