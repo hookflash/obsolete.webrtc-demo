@@ -538,6 +538,7 @@ Author: Christoph Dorn <christoph@christophdorn.com> [github.com/cadorn]
                     $('#call > DIV:nth-child(2)').hide();
                     $('#remoteVideo').attr('src', '');
                     $('#localVideo').attr('src', '');
+                    $('#messages').html('');
                     closeDialogs([ 'accept', 'cancel', 'hungup' ]);
                     switchView('contacts');
                     // Release access to local webcam and microphone.
